@@ -45,7 +45,26 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        self.in_features = in_features
+        self.out_features = out_features
+        self.input_layer = input_layer
 
+        self.name = "Linear"
+        # note that for weight matrix, I am storing the transpose of the weight matrix
+        # w.r.t. that provided in the assignment
+        self.params = {
+            "weight": np.random.randn(in_features, out_features) * np.sqrt(2 / in_features),
+            "bias": np.zeros(out_features),
+        }
+        self.requires_grad = input_layer
+        self.grads = {
+            "weight": np.zeros(self.params["weight"].shape),
+            "bias": np.zeros(self.params["bias"].shape),
+        }
+        self.cache = {
+            "x": None,
+            "out": None,
+        }
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -68,7 +87,9 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        out = x.dot(self.params["weight"]) + self.params["bias"]
+        self.cache["x"] = x
+        self.cache["out"] = out
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -92,7 +113,9 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        self.grads["weight"] = self.cache["x"].T.dot(dout)
+        self.grads["bias"] = np.ones(dout.shape[0]).T.dot(dout)
+        dx = dout.dot(self.params["weight"].T)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -109,7 +132,8 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.cache["x"] = None
+        self.cache["out"] = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -138,7 +162,10 @@ class ReLUModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        out = np.maximum(x, 0)
+        self.cache = {
+            "x": x,
+        }
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -160,7 +187,11 @@ class ReLUModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        # dx = np.maximum(dout, 0)
+        dx = np.zeros(dout.shape, dtype=dout.dtype)
+        dx[self.cache["x"] < 0] = 0.0
+        dx[self.cache["x"] > 0] = 1.0
+        dx = np.multiply(dx, dout) 
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -177,7 +208,7 @@ class ReLUModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.cache["x"] = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -206,7 +237,15 @@ class SoftMaxModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        b = np.max(x, axis=1, keepdims=True)
+        b = np.tile(b, (1, x.shape[1]))
+        out = np.exp(x - b)
+        out = out / np.sum(out, axis=1, keepdims=True)
+        self.cache = {
+            "x": x,
+            "b": b,
+            "out": out,
+        }
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -228,7 +267,8 @@ class SoftMaxModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        ones = np.ones(dout.shape[1])
+        dx = np.multiply(self.cache["out"], dout - np.multiply(self.cache["out"], dout) @ ones.reshape((-1, 1)) @ ones.reshape((1, -1)))
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -246,7 +286,8 @@ class SoftMaxModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        for key in self.cache:
+            self.cache[key] = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -302,3 +343,13 @@ class CrossEntropyModule(object):
         #######################
 
         return dx
+
+
+if __name__ == '__main__':
+    from unittest import TestLayers
+
+    # Create a dummy PyTorch trainable model
+    model = LinearModule(10, 5)
+    x = np.random.rand(1, 10)
+    y = model.forward(x)
+    assert y.shape == (1, 5)
