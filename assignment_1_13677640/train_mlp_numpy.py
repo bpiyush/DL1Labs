@@ -53,12 +53,64 @@ def accuracy(predictions, targets):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-
+    predictions = predictions.argmax(axis=1)
+    accuracy = np.mean(predictions == targets)
     #######################
     # END OF YOUR CODE    #
     #######################
 
     return accuracy
+
+
+def step(model, loss_module, batch, iterator, epoch, lr=None, mode="Training"):
+    """
+    Performs forward/backward step for a given model on a given batch.
+
+    Args:
+        model: An instance of 'MLP', the model to train.
+        loss_module: An instance of 'CrossEntropyModule', the loss module.
+        batch: The current batch of data to train on.
+        iterator: The iterator of the dataset.
+        epoch: The current epoch.
+        lr: The current learning rate.
+        mode: The mode of the step, i.e. training or evaluation.
+    
+    Returns:
+        model: The trained model (only if mode="Training").
+        loss: scalar float, the average loss over the batch.
+        accuracy: scalar float, the average accuracy over the batch.
+    """
+    x, y = batch
+    x = x.reshape(x.shape[0], -1)
+
+    # 1: forward pass
+    y_pred = model.forward(x)
+    loss = loss_module.forward(y_pred, y)
+    accu = accuracy(y_pred, y)
+    iterator.set_description(f"::::: {mode} | Epoch {epoch} | Loss: {loss:.4f} | Accu: {accu:.4f} | ")
+
+    # 2: backpropagation (if training)
+    if mode == "Training":
+        assert lr is not None
+
+        # 2b: compute loss gradients
+        dout = loss_module.backward(y_pred, y)
+
+        # 2c: backpropagate gradients
+        model.backward(dout)
+
+        # 3: update model parameters
+        for layer in model.layers:
+            if hasattr(layer, "params"):
+                assert hasattr(layer, "grads"), \
+                    f"Cannot update params for {layer} since it does not have gradients."
+                for key in layer.params:
+                    layer.params[key] -= lr * layer.grads[key]
+
+        # 2a: clear gradient cache
+        model.clear_cache()
+
+    return model, loss, accu
 
 
 def evaluate_model(model, data_loader):
@@ -81,12 +133,26 @@ def evaluate_model(model, data_loader):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
+    avg_accuracy = []
 
+    # evaluate model
+    iterator = tqdm(data_loader, desc=f"::::: Evaluating model on given dataloader")
+    for batch in iterator:
+        x, y = batch
+        x = x.reshape(x.shape[0], -1)
+
+        # 1: forward pass
+        y_pred = model.forward(x)
+        accu = accuracy(y_pred, y)
+        avg_accuracy.append(accu)
+
+    avg_accuracy = np.mean(avg_accuracy)
     #######################
     # END OF YOUR CODE    #
     #######################
 
     return avg_accuracy
+
 
 
 def train(hidden_dims, lr, batch_size, epochs, seed, data_dir):
@@ -134,15 +200,83 @@ def train(hidden_dims, lr, batch_size, epochs, seed, data_dir):
     # PUT YOUR CODE HERE  #
     #######################
 
+    # define cosntants
+    n_inputs = 32 * 32 * 3
+    n_classes = 10
+
     # TODO: Initialize model and loss module
-    model = ...
-    loss_module = ...
+    model = MLP(n_inputs, hidden_dims, n_classes)
+    loss_module = CrossEntropyModule()
+
     # TODO: Training loop including validation
-    val_accuracies = ...
-    # TODO: Test best model
-    test_accuracy = ...
-    # TODO: Add any information you might want to save for plotting
-    logging_info = ...
+
+    train_losses = []
+    train_accuracies = []
+    val_losses = []
+    val_accuracies = []
+
+    best_model = {
+        "model": None,
+        "val_accuracy": 0,
+        "epoch": None,
+    }
+
+    for epoch in range(epochs):
+        train_epoch_loss = []
+        train_epoch_accu = []
+        val_epoch_loss = []
+        val_epoch_accu = []
+
+        # training loop
+        iterator = tqdm(cifar10_loader["train"], desc=f"::::: Training | Epoch {epoch} | ")
+        for batch in iterator:
+            model, loss, accu = step(model, loss_module, batch, iterator, epoch, lr, mode="Training")
+            train_epoch_loss.append(loss)
+            train_epoch_accu.append(accu)
+
+        # evaluate on validation set
+        iterator = tqdm(cifar10_loader["validation"], desc=f"::::: Evaluating | Epoch {epoch} | ")
+        for batch in iterator:
+            model, loss, accu = step(model, loss_module, batch, iterator, epoch, lr, mode="Validate")
+            val_epoch_loss.append(loss)
+            val_epoch_accu.append(accu)
+        
+        train_losses.append(np.mean(train_epoch_loss))
+        train_accuracies.append(np.mean(train_epoch_accu))
+        val_losses.append(np.mean(val_epoch_loss))
+        val_accuracies.append(np.mean(val_epoch_accu))
+
+        print(f"::::: Finished Epoch {epoch} ")
+        print(f"::::: Training | Loss: {train_losses[-1]:.4f} | Accuracy: {train_accuracies[-1]}")
+        print(f"::::: Validate | Loss: {val_losses[-1]:.4f} | Accuracy: {val_accuracies[-1]}")
+
+        # save best model
+        if best_model["model"] is None or val_accuracies[-1] > best_model["val_accuracy"]:
+            best_model["model"] = deepcopy(model)
+            best_model["val_accuracy"] = val_accuracies[-1]
+            best_model["epoch"] = epoch
+            print(f"::::: Saving best model so far with validation accuracy {val_accuracies[-1]} (epoch {epoch})")
+
+        print(f"{'- -' * 50}")
+
+    # # TODO: Test best model
+    test_accuracy = evaluate_model(best_model["model"], cifar10_loader["test"])
+    print(f"::::: Test | Accuracy: {test_accuracy}")
+
+    # # TODO: Add any information you might want to save for plotting
+    logging_dict = {
+        "train_loss": train_losses,
+        "val_loss": val_losses,
+        "train_accuracy": train_accuracies,
+        "val_accuracy": train_accuracies,
+        "best_test_accuracy": test_accuracy,
+        "best_epoch": best_model["epoch"],
+        "epochs": list(range(epochs)),
+    }
+
+    # set model as the best model
+    model = best_model["model"]
+
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -175,6 +309,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
     kwargs = vars(args)
 
-    train(**kwargs)
+    model, val_accuracies, test_accuracy, logging_dict = train(**kwargs)
     # Feel free to add any additional functions, such as plotting of the loss curve here
+
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    ax.plot(logging_dict["epochs"], logging_dict["train_loss"], "--o", label="Training Loss")
+    ax.plot(logging_dict["epochs"], logging_dict["val_loss"], "--o", label="Validation Loss")
+    ax.grid()
+    ax.set_title(f"Loss curves for best MLP model (Test accuracy: {logging_dict['best_test_accuracy']:.4f})")
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Loss")
+    plt.legend()
+
+    save_path = "results/mlp_numpy_loss.png"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, bbox_inches="tight")
+
+    plt.show()
     
