@@ -55,14 +55,35 @@ class MLP(nn.Module):
         
         Hint: No softmax layer is needed here. Look at the CrossEntropyLoss module for loss calculation.
         """
+        super().__init__()
 
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.net = nn.Sequential()
+        self.net.add_module('input', nn.Linear(n_inputs, n_hidden[0]))
+        for i in range(1, len(n_hidden)):
+            if use_batch_norm:
+                self.net.add_module('batch_norm_' + str(i), nn.BatchNorm1d(n_hidden[i - 1]))
+            self.net.add_module('relu_' + str(i), nn.ReLU())
+            self.net.add_module('linear_' + str(i), nn.Linear(n_hidden[i - 1], n_hidden[i]))
+
+        if use_batch_norm:
+            self.net.add_module('batch_norm_' + str(len(n_hidden)), nn.BatchNorm1d(n_hidden[-1]))
+        self.net.add_module('relu_' + str(len(n_hidden)), nn.ReLU())
+        self.net.add_module('output', nn.Linear(n_hidden[-1], n_classes))
+
+        # init using Kaiming normal
+        self.net.apply(self.init_weights_kaiming_normal)
         #######################
         # END OF YOUR CODE    #
         #######################
+    
+    @staticmethod
+    def init_weights_kaiming_normal(m):
+        if isinstance(m, nn.Linear):
+            nn.init.kaiming_normal_(m.weight)
+            m.bias.data.fill_(0.0)
 
     def forward(self, x):
         """
@@ -81,7 +102,8 @@ class MLP(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        x = x.view(x.size(0), -1)
+        out = self.net(x)
         #######################
         # END OF YOUR CODE    #
         #######################
