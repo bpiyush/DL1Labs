@@ -52,7 +52,20 @@ class MLP(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.layers = []
+
+        # add input layer
+        self.layers.append(LinearModule(n_inputs, n_hidden[0], input_layer=True))
+        self.layers.append(ReLUModule())
+
+        # add hidden layers
+        for i in range(len(n_hidden) - 1):
+            self.layers.append(LinearModule(n_hidden[i], n_hidden[i + 1]))
+            self.layers.append(ReLUModule())
+
+        # add output and softmax layer
+        self.layers.append(LinearModule(n_hidden[-1], n_classes))
+        self.softmax = SoftMaxModule()
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -74,7 +87,10 @@ class MLP(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        out = x
+        for layer in self.layers:
+            out = layer.forward(out)
+        out = self.softmax.forward(out)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -95,7 +111,9 @@ class MLP(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        dout = self.softmax.backward(dout)
+        for layer in reversed(self.layers):
+            dout = layer.backward(dout)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -112,7 +130,8 @@ class MLP(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        for layer in self.layers:
+            layer.clear_cache()
         #######################
         # END OF YOUR CODE    #
         #######################
