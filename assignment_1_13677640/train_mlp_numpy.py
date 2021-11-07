@@ -317,7 +317,7 @@ if __name__ == '__main__':
     ax.plot(logging_dict["epochs"], logging_dict["train_loss"], "--o", label="Training Loss")
     ax.plot(logging_dict["epochs"], logging_dict["val_loss"], "--o", label="Validation Loss")
     ax.grid()
-    ax.set_title(f"Loss curves for best MLP model (Test accuracy: {logging_dict['best_test_accuracy']:.4f})")
+    ax.set_title(f"Loss curves for best model: MLP (NumPy) (Test accuracy: {logging_dict['best_test_accuracy']:.4f})")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Loss")
     plt.legend()
