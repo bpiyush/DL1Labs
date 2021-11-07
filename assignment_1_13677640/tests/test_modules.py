@@ -129,6 +129,34 @@ class TestLayers(unittest.TestCase):
             
             self.assertLess(rel_error(dx, dx_num), rel_error_max)
 
+    def test_cross_entropy_backward(self):
+        np.random.seed(42)
+        rel_error_max = 1e-5
+        
+        for test_num in range(10):
+            N = np.random.choice(range(1, 20))
+            C = np.random.choice(range(1, 10))
+            x = np.random.uniform(0, 1, (N, C))
+            y = np.zeros((N, C))
+            y[np.arange(N), np.random.randint(0, C, N)] = 1
+
+            layer = CrossEntropyModule()            
+
+            # test forward pass
+            from torch.nn import CrossEntropyLoss as CE
+            out_numpy = layer.forward(SoftMaxModule().forward(x), y)
+            x_torch = torch.from_numpy(x)
+            x_torch.requires_grad = True
+            out_torch = CE().forward(x_torch, torch.from_numpy(y))
+            assert (out_numpy - out_torch.item() < 1e-5).all()
+
+            # test backward pass
+            out = layer.forward(x, y)
+            dx = layer.backward(x, y)
+            dx_num = eval_numerical_gradient_array(lambda xx: layer.forward(xx, y), x, out)
+            
+            self.assertLess(rel_error(dx, dx_num), rel_error_max)
+
 
 if __name__ == '__main__':    
     suite = unittest.TestLoader().loadTestsFromTestCase(TestLayers)

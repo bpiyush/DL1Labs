@@ -132,8 +132,8 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        self.cache["x"] = None
-        self.cache["out"] = None
+        for key in self.cache:
+            self.cache[key] = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -208,7 +208,8 @@ class ReLUModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        self.cache["x"] = None
+        for key in self.cache:
+            self.cache[key] = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -268,7 +269,10 @@ class SoftMaxModule(object):
         # PUT YOUR CODE HERE  #
         #######################
         ones = np.ones(dout.shape[1])
-        dx = np.multiply(self.cache["out"], dout - np.multiply(self.cache["out"], dout) @ ones.reshape((-1, 1)) @ ones.reshape((1, -1)))
+        dx = np.multiply(
+            self.cache["out"],
+            dout - np.multiply(self.cache["out"], dout) @ ones.reshape((-1, 1)) @ ones.reshape((1, -1))
+        )
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -314,7 +318,15 @@ class CrossEntropyModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        # b = np.max(x, axis=1, keepdims=True)
+        # b_tile = np.tile(b, (1, x.shape[1]))
+        # logsumexpx = b + np.log(np.sum(np.exp(x - b_tile), axis=1, keepdims=True))
+        # logsumexpx_tile = np.tile(logsumexpx, (1, x.shape[1]))
+        # logx = x - logsumexpx_tile
 
+        x = x.clip(min=1e-8, max=None)
+        logx = np.log(x)
+        out = -(1.0 / y.shape[0]) * np.sum(np.multiply(y, logx))
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -337,7 +349,8 @@ class CrossEntropyModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        x = x.clip(min=1e-8, max=None)
+        dx = - (1.0 / y.shape[0]) * np.divide(y, x)
         #######################
         # END OF YOUR CODE    #
         #######################
