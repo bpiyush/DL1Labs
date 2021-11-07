@@ -357,12 +357,3 @@ class CrossEntropyModule(object):
 
         return dx
 
-
-if __name__ == '__main__':
-    from unittest import TestLayers
-
-    # Create a dummy PyTorch trainable model
-    model = LinearModule(10, 5)
-    x = np.random.rand(1, 10)
-    y = model.forward(x)
-    assert y.shape == (1, 5)
