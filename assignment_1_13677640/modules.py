@@ -318,11 +318,9 @@ class CrossEntropyModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        # b = np.max(x, axis=1, keepdims=True)
-        # b_tile = np.tile(b, (1, x.shape[1]))
-        # logsumexpx = b + np.log(np.sum(np.exp(x - b_tile), axis=1, keepdims=True))
-        # logsumexpx_tile = np.tile(logsumexpx, (1, x.shape[1]))
-        # logx = x - logsumexpx_tile
+        # convert y to one-hot-encoding
+        C = x.shape[1]
+        y = np.eye(C)[y]
 
         x = x.clip(min=1e-8, max=None)
         logx = np.log(x)
@@ -349,6 +347,10 @@ class CrossEntropyModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        # convert y to one-hot-encoding
+        C = x.shape[1]
+        y = np.eye(C)[y]
+
         x = x.clip(min=1e-8, max=None)
         dx = - (1.0 / y.shape[0]) * np.divide(y, x)
         #######################

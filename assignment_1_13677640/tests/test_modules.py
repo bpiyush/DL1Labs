@@ -137,8 +137,9 @@ class TestLayers(unittest.TestCase):
             N = np.random.choice(range(1, 20))
             C = np.random.choice(range(1, 10))
             x = np.random.uniform(0, 1, (N, C))
-            y = np.zeros((N, C))
-            y[np.arange(N), np.random.randint(0, C, N)] = 1
+            # y = np.zeros((N, C))
+            # y[np.arange(N), np.random.randint(0, C, N)] = 1
+            y = np.random.randint(0, C, N)
 
             layer = CrossEntropyModule()
 
