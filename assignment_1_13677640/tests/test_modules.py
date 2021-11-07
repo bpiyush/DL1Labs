@@ -140,7 +140,7 @@ class TestLayers(unittest.TestCase):
             y = np.zeros((N, C))
             y[np.arange(N), np.random.randint(0, C, N)] = 1
 
-            layer = CrossEntropyModule()            
+            layer = CrossEntropyModule()
 
             # test forward pass
             from torch.nn import CrossEntropyLoss as CE
@@ -151,9 +151,8 @@ class TestLayers(unittest.TestCase):
             assert (out_numpy - out_torch.item() < 1e-5).all()
 
             # test backward pass
-            out = layer.forward(x, y)
             dx = layer.backward(x, y)
-            dx_num = eval_numerical_gradient_array(lambda xx: layer.forward(xx, y), x, out)
+            dx_num = eval_numerical_gradient(lambda xx: layer.forward(xx, y), x, verbose=False)
             
             self.assertLess(rel_error(dx, dx_num), rel_error_max)
 
