@@ -52,11 +52,12 @@ class LinearModule(object):
         self.name = "Linear"
         # note that for weight matrix, I am storing the transpose of the weight matrix
         # w.r.t. that provided in the assignment
+        gain = np.sqrt(2) if not input_layer else 1.0
+        std = gain * np.sqrt(1 / in_features)
         self.params = {
-            "weight": np.random.randn(in_features, out_features) * np.sqrt(2 / in_features),
+            "weight": np.random.randn(in_features, out_features) * std,
             "bias": np.zeros(out_features),
         }
-        self.requires_grad = input_layer
         self.grads = {
             "weight": np.zeros(self.params["weight"].shape),
             "bias": np.zeros(self.params["bias"].shape),
