@@ -22,6 +22,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+from matplotlib.pyplot import ylabel
 import numpy as np
 import os
 from tqdm.auto import tqdm
@@ -313,19 +314,34 @@ if __name__ == '__main__':
     model, val_accuracies, test_accuracy, logging_dict = train(**kwargs)
     # Feel free to add any additional functions, such as plotting of the loss curve here
 
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
-    ax.plot(logging_dict["epochs"], logging_dict["train_loss"], "--o", label="Training Loss")
-    ax.plot(logging_dict["epochs"], logging_dict["val_loss"], "--o", label="Validation Loss")
-    ax.grid()
-    ax.set_title(f"Loss curves for best model: MLP (NumPy) (Test accuracy: {logging_dict['best_test_accuracy']:.4f})")
-    ax.set_xlabel("Epoch")
-    ax.set_ylabel("Loss")
-    plt.legend()
-
-    save_path = "results/mlp_numpy_loss.png"
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    plt.savefig(save_path, bbox_inches="tight")
-
-    plt.show()
+    from utils import plot_sequences
     
+    # Plotting loss curve
+    plot_sequences(
+        x=logging_dict["epochs"],
+        y1=logging_dict["train_loss"],
+        y2=logging_dict["val_loss"],
+        x_label="Epoch",
+        y_label="Loss",
+        y1_label="Training Loss",
+        y2_label="Validation Loss",
+        title=f"Loss curves for best model: MLP (NumPy) (Test accuracy: {logging_dict['best_test_accuracy']:.4f})",
+        save=True,
+        save_path = "results/mlp_numpy_loss.png",
+        show=True,
+    )
+
+    # Plotting accuracy curve
+    plot_sequences(
+        x=logging_dict["epochs"],
+        y1=logging_dict["train_accuracy"],
+        y2=logging_dict["val_accuracy"],
+        x_label="Epoch",
+        y_label="Accuracy",
+        y1_label="Training Accuracy",
+        y2_label="Validation Accuracy",
+        title=f"Accuracy curves for best model: MLP (NumPy) (Test accuracy: {logging_dict['best_test_accuracy']:.4f})",
+        save=True,
+        save_path = "results/mlp_numpy_accuracy.png",
+        show=True,
+    )
