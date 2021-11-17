@@ -84,6 +84,10 @@ def step(model, loss_module, batch, iterator, epoch, opt=None, mode="Training"):
         accuracy: scalar float, the average accuracy over the batch.
     """
     x, y = batch
+    
+    # port data to device same as model
+    x = x.to(model.device)
+    y = y.to(model.device)
 
     # 1: forward pass
     y_pred = model(x)
@@ -207,6 +211,9 @@ def train(hidden_dims, lr, use_batch_norm, batch_size, epochs, seed, data_dir):
     opt = torch.optim.SGD(model.parameters(), lr=lr)
     print("::::: Model ::::::")
     print(model)
+    
+    # port model to device
+    model = model.to(device)
 
     # TODO: Training loop including validation
 
@@ -329,7 +336,7 @@ if __name__ == '__main__':
         title=f"Loss curves for best model: MLP (PyTorch) (Test accuracy: {logging_dict['best_test_accuracy']:.4f})",
         save=True,
         save_path = "results/mlp_pytorch_loss.png",
-        show=True,
+        show=False,
     )
 
     # Plotting accuracy curve
@@ -344,5 +351,5 @@ if __name__ == '__main__':
         title=f"Accuracy curves for best model: MLP (PyTorch) (Test accuracy: {logging_dict['best_test_accuracy']:.4f})",
         save=True,
         save_path = "results/mlp_pytorch_accuracy.png",
-        show=True,
+        show=False,
     )

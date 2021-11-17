@@ -328,7 +328,7 @@ if __name__ == '__main__':
         title=f"Loss curves for best model: MLP (NumPy) (Test accuracy: {logging_dict['best_test_accuracy']:.4f})",
         save=True,
         save_path = "results/mlp_numpy_loss.png",
-        show=True,
+        show=False,
     )
 
     # Plotting accuracy curve
@@ -343,5 +343,5 @@ if __name__ == '__main__':
         title=f"Accuracy curves for best model: MLP (NumPy) (Test accuracy: {logging_dict['best_test_accuracy']:.4f})",
         save=True,
         save_path = "results/mlp_numpy_accuracy.png",
-        show=True,
+        show=False,
     )
