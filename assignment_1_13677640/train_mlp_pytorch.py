@@ -133,13 +133,15 @@ def evaluate_model(model, data_loader):
     iterator = tqdm(data_loader, desc=f"::::: Evaluating model on given dataloader")
     for batch in iterator:
         x, y = batch
+        x = x.to(model.device)
+        y = y.to(model.device)
 
         # 1: forward pass
         y_pred = model(x)
         accu = accuracy(y_pred, y)
         avg_accuracy.append(accu)
 
-    avg_accuracy = np.mean(avg_accuracy)
+    avg_accuracy = torch.tensor(avg_accuracy).mean().cpu().numpy()
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -247,11 +249,11 @@ def train(hidden_dims, lr, use_batch_norm, batch_size, epochs, seed, data_dir):
             model, loss, accu = step(model, loss_module, batch, iterator, epoch, opt, mode="Validate")
             val_epoch_loss.append(loss)
             val_epoch_accu.append(accu)
-        
-        train_losses.append(np.mean(train_epoch_loss))
-        train_accuracies.append(np.mean(train_epoch_accu))
-        val_losses.append(np.mean(val_epoch_loss))
-        val_accuracies.append(np.mean(val_epoch_accu))
+
+        train_losses.append(torch.tensor(train_epoch_loss).mean().cpu().numpy())
+        train_accuracies.append(torch.tensor(train_epoch_accu).mean().cpu().numpy())
+        val_losses.append(torch.tensor(val_epoch_loss).mean().cpu().numpy())
+        val_accuracies.append(torch.tensor(val_epoch_accu).mean().cpu().numpy())
 
         print(f"::::: Finished Epoch {epoch} ")
         print(f"::::: Training | Loss: {train_losses[-1]:.4f} | Accuracy: {train_accuracies[-1]:.4f}")
