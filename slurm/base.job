@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu_shared_course
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=ExampleJob
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=3
+#SBATCH --time=04:00:00
+#SBATCH --mem=32000M
+#SBATCH --output=slurm_output_%A.out
+
+module purge
+module load 2021
+module load Anaconda3/2021.05
+
+# Your job starts in the directory where you call sbatch
+# cd $HOME/projects/DL1Labs/assignment_1_13677640/
+# Activate your environment
+source activate dl2021
+
+# srun python -c "import torch; print(torch.__version__)"
+# Run your code
+srun python -u $HOME/projects/DL1Labs/assignment_1_13677640/train_mlp_pytorch.py
