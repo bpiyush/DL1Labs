@@ -1,0 +1,4 @@
+/var/spool/slurm/slurmd/job8406692/slurm_script: line 16: cd: /home/lcur0279/uvadlc_practicals_2021/: No such file or directory
+
+EnvironmentFileNotFound: '/home/lcur0279/projects/DL1Labs/setup/dl2021_gpu.yml' file not found
+
