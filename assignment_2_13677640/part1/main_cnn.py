@@ -21,6 +21,9 @@ import os
 import json
 import argparse
 import numpy as np
+from collections import defaultdict
+from tqdm import tqdm
+from pprint import pprint
 
 import torch
 import torch.nn as nn
@@ -82,6 +85,86 @@ def get_model(model_name, num_classes=10):
     return cnn_model
 
 
+def top1_error_rate(y_pred, y_true):
+    """
+    Computes the top-1 error rate.
+
+    Args:
+        y_true: The true labels.
+        y_pred: The predicted labels.
+    Returns:
+        The top-1 error rate.
+    """
+    #######################
+    # PUT YOUR CODE HERE  #
+    #######################
+    top1_error_rate = 1 - (y_pred.argmax(dim=1) == y_true).float().mean()
+    #######################
+    # END OF YOUR CODE    #
+    #######################
+    return top1_error_rate
+
+
+def run_phase(model, batch, loss_modules, metric_modules, iterator, epoch, opt=None, phase="Training"):
+    """
+    Performs forward/backward step for a given model on a given batch.
+
+    Args:
+        model: An instance of 'MLP', the model to train.
+        loss_module: An instance of 'CrossEntropyModule', the loss module.
+        batch: The current batch of data to train on.
+        iterator: The iterator of the dataset.
+        epoch: The current epoch.
+        opt: The optimizer used for training.
+        phase: The phase of the step, i.e. training or evaluation.
+    
+    Returns:
+        model: The trained model (only if mode="Training").
+        loss: scalar float, the average loss over the batch.
+        accuracy: scalar float, the average accuracy over the batch.
+    """
+    x, y = batch
+    
+    # port data to device same as model
+    x = x.to(model.device)
+    y = y.to(model.device)
+
+    # forward pass
+    y_pred = model(x)
+    
+    # compute losses
+    losses = defaultdict(float)
+    for lossname, loss_module in loss_modules.items():
+        losses[lossname] += loss_module(y_pred, y)
+    net_loss = sum(losses.values())
+    
+    # compute metrics
+    metrics = defaultdict(float)
+    for metricname, metric_module in metric_modules.items():
+        metric_value = metric_module(y_pred, y)
+        metrics[metricname] = metric_value.item()
+
+    # backpropagation (if training)
+    if phase == "Training":
+        assert opt is not None
+        opt.zero_grad()
+        net_loss.backward()
+        opt.step()
+
+    # get scalar loss values
+    for lossname in losses:
+        losses[lossname] = losses[lossname].item()
+    net_loss = net_loss.item()
+
+    # display update
+    display = f"::::: [{phase[0].upper()}] | Epoch {epoch} | Loss: {net_loss:.3f} | "
+    for metric in metrics:
+        display += f"{metric}: {metrics[metric]:.3f} | "
+    iterator.set_description(display)
+
+    return model, losses, metrics
+
+
 def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device):
     """
     Trains a given model architecture for the specified hyperparameters.
@@ -106,19 +189,150 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
     #######################
     
     # Load the datasets
-    pass
+    train_dataset, validation_dataset = get_train_validation_set(data_dir)
+
+    # Define the dataloaders
+    train_dataloader = data.DataLoader(
+        dataset=train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        drop_last=True,
+    )
+    validation_dataloader = data.DataLoader(
+        dataset=validation_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        drop_last=False,
+    )
+
+    # Define the loss module
+    loss_modules = {
+        "cross_entropy": nn.CrossEntropyLoss(),
+    }
+    
+    # Define the metric modules
+    metric_modules = {
+        "top1_error_rate": top1_error_rate,
+    }
 
     # Initialize the optimizers and learning rate scheduler. 
     # We provide a recommend setup, which you are allowed to change if interested.
     optimizer = torch.optim.SGD(model.parameters(), lr=lr,
                                 momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[90, 135], gamma=0.1)
-    
+
+    # port model to device
+    model = model.to(device)
+    model.device = device
+
     # Training loop with validation after each epoch. Save the best model, and remember to use the lr scheduler.
-    pass
+    losses = {
+        "cross_entropy": defaultdict(list),
+    }
+    metrics = {
+        "top1_error_rate": defaultdict(list),
+    }
+
+    best_model = {
+        "model": None,
+        "losses": {
+            "cross_entropy": defaultdict(lambda x: 0),
+        },
+        "metrics": {
+            "top1_error_rate": defaultdict(lambda x: 0),
+        },
+        "epoch": None,
+    }
+
+    for epoch in range(epochs):
+        epoch_losses = {
+            "cross_entropy": defaultdict(list),
+        }
+        epoch_metrics = {
+            "top1_error_rate": defaultdict(list),
+        }
+
+        # training loop
+        iterator = tqdm(
+            train_dataloader,
+            desc=f"::::: [T] | Epoch {epoch} | ", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}',
+        )
+        for batch in iterator:
+            model, batch_losses, batch_metrics = run_phase(
+                model, batch, loss_modules, metric_modules,
+                iterator, epoch, optimizer, phase="Training",
+            )
+            for lossname, lossvalue in batch_losses.items():
+                epoch_losses[lossname]["train"].append(lossvalue)
+            for metricname, metricvalue in batch_metrics.items():
+                epoch_metrics[metricname]["train"].append(metricvalue)
+
+        for lossname, lossvalue in epoch_losses.items():
+            losses[lossname]["train"].append(torch.tensor(lossvalue["train"]).mean().cpu().numpy())
+        for metricname, metricvalue in epoch_metrics.items():
+            metrics[metricname]["train"].append(torch.tensor(metricvalue["train"]).mean().cpu().numpy())
+
+        # validation loop
+        iterator = tqdm(
+            validation_dataloader,
+            desc=f"::::: [V] | Epoch {epoch} | ", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}',
+        )
+        for batch in iterator:
+            model, batch_losses, batch_metrics = run_phase(
+                model, batch, loss_modules, metric_modules,
+                iterator, epoch, optimizer, phase="Validation",
+            )
+            for lossname, lossvalue in batch_losses.items():
+                epoch_losses[lossname]["validation"].append(lossvalue)
+            for metricname, metricvalue in batch_metrics.items():
+                epoch_metrics[metricname]["validation"].append(metricvalue)
+
+        for lossname, lossvalue in epoch_losses.items():
+            losses[lossname]["validation"].append(torch.tensor(lossvalue["validation"]).mean().cpu().numpy())
+        for metricname, metricvalue in epoch_metrics.items():
+            metrics[metricname]["validation"].append(torch.tensor(metricvalue["validation"]).mean().cpu().numpy())
+
+        print(f"::::: Finished Epoch {epoch} ")
+        print(f"::::: Training")
+        train_losses = {k: v["train"][-1] for k, v in losses.items()}
+        print("Losses: ", train_losses)
+        train_metrics = {k: v["train"][-1] for k, v in metrics.items()}
+        print("Metrics: ", train_metrics)
+        # disp = f":::::::::: Losses: "
+        # for lossname, lossvalue in epoch_losses.items():
+        #     disp += f"{lossname}: {losses[lossname]['train'][-1]:.4f}"
+        # print(disp)
+        # disp = f":::::::::: Metrics: "
+        # for metricname, metricvalue in epoch_metrics.items():
+        #     disp += f"{metricname}: {metrics[metricname]['train'][-1]:.4f}"
+        # print(disp)
+
+        print(f"::::: Validation")
+        validation_losses = {k: v["validation"][-1] for k, v in losses.items()}
+        print("Losses: ", validation_losses)
+        validation_metrics = {k: v["validation"][-1] for k, v in metrics.items()}
+        print("Metrics: ", validation_metrics)
+        # disp = f":::::::::: Losses: "
+        # for lossname, lossvalue in epoch_losses.items():
+        #     disp += f"{lossname}: {losses[lossname]['validation'][-1]:.4f}"
+        # print(disp)
+        # disp = f":::::::::: Metrics: "
+        # for metricname, metricvalue in epoch_metrics.items():
+        #     disp += f"{metricname}: {metrics[metricname]['validation'][-1]:.4f}"
+        # print(disp)
+
+        # save best model
+        # if best_model["model"] is None or val_accuracies[-1] > best_model["val_accuracy"]:
+        #     best_model["model"] = deepcopy(model)
+        #     best_model["val_accuracy"] = val_accuracies[-1]
+        #     best_model["epoch"] = epoch
+        #     print(f"::::: Saving best model so far with validation accuracy {val_accuracies[-1]:.4f} (epoch {epoch})")
+
+        print(f"{'- -' * 50}")
+
     
     # Load best model and return it.
-    pass
+    # pass
     
     #######################
     # END OF YOUR CODE    #
