@@ -23,7 +23,7 @@ import argparse
 import numpy as np
 from collections import defaultdict
 from tqdm import tqdm
-from pprint import pprint
+from copy import deepcopy
 
 import torch
 import torch.nn as nn
@@ -232,16 +232,19 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
     metrics = {
         "top1_error_rate": defaultdict(list),
     }
-
     best_model = {
         "model": None,
         "losses": {
-            "cross_entropy": defaultdict(lambda x: 0),
+            "cross_entropy": defaultdict(int),
         },
         "metrics": {
-            "top1_error_rate": defaultdict(lambda x: 0),
+            "top1_error_rate": defaultdict(int),
         },
         "epoch": None,
+        "monitor_metric": {
+            "key": "top1_error_rate",
+            "minimize": True,
+        },
     }
 
     for epoch in range(epochs):
@@ -298,42 +301,39 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
         print("Losses: ", train_losses)
         train_metrics = {k: v["train"][-1] for k, v in metrics.items()}
         print("Metrics: ", train_metrics)
-        # disp = f":::::::::: Losses: "
-        # for lossname, lossvalue in epoch_losses.items():
-        #     disp += f"{lossname}: {losses[lossname]['train'][-1]:.4f}"
-        # print(disp)
-        # disp = f":::::::::: Metrics: "
-        # for metricname, metricvalue in epoch_metrics.items():
-        #     disp += f"{metricname}: {metrics[metricname]['train'][-1]:.4f}"
-        # print(disp)
 
         print(f"::::: Validation")
         validation_losses = {k: v["validation"][-1] for k, v in losses.items()}
         print("Losses: ", validation_losses)
         validation_metrics = {k: v["validation"][-1] for k, v in metrics.items()}
         print("Metrics: ", validation_metrics)
-        # disp = f":::::::::: Losses: "
-        # for lossname, lossvalue in epoch_losses.items():
-        #     disp += f"{lossname}: {losses[lossname]['validation'][-1]:.4f}"
-        # print(disp)
-        # disp = f":::::::::: Metrics: "
-        # for metricname, metricvalue in epoch_metrics.items():
-        #     disp += f"{metricname}: {metrics[metricname]['validation'][-1]:.4f}"
-        # print(disp)
 
         # save best model
-        # if best_model["model"] is None or val_accuracies[-1] > best_model["val_accuracy"]:
-        #     best_model["model"] = deepcopy(model)
-        #     best_model["val_accuracy"] = val_accuracies[-1]
-        #     best_model["epoch"] = epoch
-        #     print(f"::::: Saving best model so far with validation accuracy {val_accuracies[-1]:.4f} (epoch {epoch})")
+        save_current = best_model["model"] is None
+        monitor_metric = best_model["monitor_metric"]
+        if not save_current:
+            if monitor_metric["minimize"]:
+                save_current = validation_metrics[monitor_metric["key"]] \
+                    < best_model["metrics"][monitor_metric["key"]]
+            else:
+                save_current = validation_metrics[monitor_metric["key"]] \
+                    > best_model["metrics"][monitor_metric["key"]]
+
+        if save_current:
+            best_model["model"] = deepcopy(model.to("cpu"))
+            best_model["metrics"] = validation_metrics
+            best_model["losses"] = validation_losses
+            best_model["epoch"] = epoch
+            print(f"::::: Saving best model so far with validation metrics {validation_metrics} (epoch {epoch})")
+            os.makedirs(os.path.dirname(checkpoint_name), exist_ok=True)
+            torch.save(best_model, checkpoint_name)
 
         print(f"{'- -' * 50}")
-
     
     # Load best model and return it.
-    # pass
-    
+    best_model_dict = torch.load(checkpoint_name, map_location=torch.device("cpu"))
+    model = best_model_dict["model"]
+
     #######################
     # END OF YOUR CODE    #
     #######################
