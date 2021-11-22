@@ -37,6 +37,7 @@ from torchvision import transforms
 
 from augmentations import gaussian_noise_transform, gaussian_blur_transform, contrast_transform, jpeg_transform
 from cifar10_utils import get_train_validation_set, get_test_set
+from utils import print_update
 
 
 def set_seed(seed):
@@ -368,6 +369,44 @@ def evaluate_model(model, data_loader, device):
     #######################
     model = model.eval()
     model = model.to(device)
+    
+    # define the loss and metric modules
+    loss_modules = {
+        "cross_entropy": nn.CrossEntropyLoss(),
+    }
+    metric_modules = {
+        "top1_error_rate": top1_error_rate,
+    }
+
+    # objects to collect per-batch losses and metrics
+    losses = {
+        "cross_entropy": defaultdict(list),
+    }
+    metrics = {
+        "top1_error_rate": defaultdict(list),
+    }
+
+    iterator = tqdm(
+        data_loader,
+        desc=f"::::: [V] | Epoch 0 | ", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}',
+    )
+    for batch in iterator:
+        model, batch_losses, batch_metrics = run_phase(
+            model, batch, loss_modules, metric_modules,
+            iterator, 0, opt=None, phase="Validation",
+        )
+        for lossname, lossvalue in batch_losses.items():
+            losses[lossname]["validation"].append(lossvalue)
+        for metricname, metricvalue in batch_metrics.items():
+            metrics[metricname]["validation"].append(metricvalue)
+
+    # mean across batches
+    for lossname, lossvalue in losses.items():
+        losses[lossname]["validation"] = torch.tensor(lossvalue["validation"]).mean().cpu().numpy()
+    for metricname, metricvalue in metrics.items():
+        metrics[metricname]["validation"] = torch.tensor(metricvalue["validation"]).mean().cpu().numpy()
+    
+    accuracy = 1 - metrics["top1_error_rate"]["validation"]
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -398,7 +437,39 @@ def test_model(model, batch_size, data_dir, device, seed):
     #######################
     set_seed(seed)
     test_results = {}
-    pass
+    
+    # setup test dataset and dataloader
+    print_update(":::::::::::::: Evaluating on clean set ::::::::::::::")
+    test_dataset = get_test_set(data_dir, augmentation=None)
+    test_dataloader = data.DataLoader(
+        dataset=test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        drop_last=False,
+    )
+    # evaluate on clean test set
+    accuracy = evaluate_model(model, test_dataloader, device)
+    test_results["clean"] = accuracy
+    
+    corruption_functions = [
+        gaussian_noise_transform,
+        gaussian_blur_transform,
+        contrast_transform,
+        jpeg_transform
+    ]
+    severity_levels = [1, 2, 3, 4, 5]
+    for corruption_function in corruption_functions:
+        for severity_level in severity_levels:
+            print_update(f":::::::::::::: Evaluating on {corruption_function.__name__}: {severity_level} ::::::::::::::")
+            test_dataset = get_test_set(data_dir, augmentation=corruption_function(severity_level))
+            test_dataloader = data.DataLoader(
+                dataset=test_dataset,
+                batch_size=batch_size,
+                shuffle=False,
+                drop_last=False,
+            )
+            accuracy = evaluate_model(model, test_dataloader, device)
+            test_results[f"{corruption_function.__name__}_{severity_level}"] = accuracy
     #######################
     # END OF YOUR CODE    #
     #######################
