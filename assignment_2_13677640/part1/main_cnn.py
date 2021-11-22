@@ -125,6 +125,11 @@ def run_phase(model, batch, loss_modules, metric_modules, iterator, epoch, opt=N
     """
     x, y = batch
     
+    if phase == "Training":
+        model = model.train()
+    else:
+        model = model.eval()
+
     # port data to device same as model
     x = x.to(model.device)
     y = y.to(model.device)
@@ -294,6 +299,9 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
             losses[lossname]["validation"].append(torch.tensor(lossvalue["validation"]).mean().cpu().numpy())
         for metricname, metricvalue in epoch_metrics.items():
             metrics[metricname]["validation"].append(torch.tensor(metricvalue["validation"]).mean().cpu().numpy())
+        
+        # update the learning rate scheduler
+        scheduler.step()
 
         print(f"::::: Finished Epoch {epoch} ")
         print(f"::::: Training")
@@ -358,7 +366,8 @@ def evaluate_model(model, data_loader, device):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    pass
+    model = model.eval()
+    model = model.to(device)
     #######################
     # END OF YOUR CODE    #
     #######################
