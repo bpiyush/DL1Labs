@@ -17,4 +17,5 @@ source deactivate
 source activate dl2021
 
 cd /home/lcur0279/projects/DL1Labs/assignment_2_13677640/part1/
-srun python -u main_cnn.py --model_name resnet18 --epochs 2
+echo "Running script on GPU"
+srun python -u main_cnn.py --model_name resnet34
