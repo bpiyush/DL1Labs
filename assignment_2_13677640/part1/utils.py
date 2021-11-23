@@ -3,6 +3,17 @@
 import os
 import pickle
 import matplotlib.pyplot as plt
+import json
+
+
+def load_json(path: str) -> dict:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_json(data, path: str) -> dict:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
 
 
 def load_pkl(path: str, encoding: str = "ascii"):
@@ -50,7 +61,7 @@ def plot_sequences(
         plt.show()
 
 
-def print_update(message: str, width: int = 140, fillchar: str = ":") -> str:
+def print_update(message: str, width: int = 120, fillchar: str = ":") -> str:
     """Prints an update message
     Args:
         message (str): message

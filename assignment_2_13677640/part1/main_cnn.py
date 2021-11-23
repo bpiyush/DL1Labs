@@ -37,7 +37,7 @@ from torchvision import transforms
 
 from augmentations import gaussian_noise_transform, gaussian_blur_transform, contrast_transform, jpeg_transform
 from cifar10_utils import get_train_validation_set, get_test_set
-from utils import print_update
+from utils import print_update, save_json
 
 
 def set_seed(seed):
@@ -439,7 +439,7 @@ def test_model(model, batch_size, data_dir, device, seed):
     test_results = {}
     
     # setup test dataset and dataloader
-    print_update(":::::::::::::: Evaluating on clean set ::::::::::::::")
+    print_update("Evaluating on clean set")
     test_dataset = get_test_set(data_dir, augmentation=None)
     test_dataloader = data.DataLoader(
         dataset=test_dataset,
@@ -460,7 +460,7 @@ def test_model(model, batch_size, data_dir, device, seed):
     severity_levels = [1, 2, 3, 4, 5]
     for corruption_function in corruption_functions:
         for severity_level in severity_levels:
-            print_update(f":::::::::::::: Evaluating on {corruption_function.__name__}: {severity_level} ::::::::::::::")
+            print_update(f"Evaluating on {corruption_function.__name__}: {severity_level}")
             test_dataset = get_test_set(data_dir, augmentation=corruption_function(severity_level))
             test_dataloader = data.DataLoader(
                 dataset=test_dataset,
@@ -501,7 +501,31 @@ def main(model_name, lr, batch_size, epochs, data_dir, seed):
     #######################
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     set_seed(seed)
-    pass
+    
+    
+    checkpoint_name = os.path.join(
+        os.path.dirname(__file__), "checkpoints", f"{model_name}_best.pt",
+    )
+    if os.path.exists(checkpoint_name):
+        # load existing checkpoint if it exists
+        print_update(f"Loading checkpoint {checkpoint_name}")
+        model = torch.load(checkpoint_name, map_location="cpu")["model"]
+    else:
+        # train the model
+        print_update("Training model")
+        model = get_model(model_name)
+        model = train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device)
+    
+    # test the model
+    test_results = test_model(model, batch_size, data_dir, device, seed)
+    
+    # save the results
+    save_path = os.path.join(
+        os.path.dirname(__file__), "results", f"{model_name}_results.json",
+    )
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    save_json(test_results, save_path)
+
     #######################
     # END OF YOUR CODE    #
     #######################
