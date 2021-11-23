@@ -37,7 +37,7 @@ from torchvision import transforms
 
 from augmentations import gaussian_noise_transform, gaussian_blur_transform, contrast_transform, jpeg_transform
 from cifar10_utils import get_train_validation_set, get_test_set
-from utils import print_update, save_json
+from utils import print_update, save_json, plot_sequences
 
 
 def set_seed(seed):
@@ -342,7 +342,34 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
     # Load best model and return it.
     best_model_dict = torch.load(checkpoint_name, map_location=torch.device("cpu"))
     model = best_model_dict["model"]
-
+    
+    # Plot losses and metrics
+    plot_sequences(
+        x=range(1, epochs + 1),
+        y1=losses["cross_entropy"]["train"],
+        y2=losses["cross_entropy"]["validation"],
+        x_label="Epoch",
+        y_label="Loss",
+        y1_label="Training Loss",
+        y2_label="Validation Loss",
+        title=f"Loss curves for {type(model).__name__}",
+        save=True,
+        save_path=f"./results/{type(model).__name__}_loss.png",
+        show=False,
+    )
+    plot_sequences(
+        x=range(1, epochs + 1),
+        y1=metrics["top1_error_rate"]["train"],
+        y2=metrics["top1_error_rate"]["validation"],
+        x_label="Epoch",
+        y_label="Top-1 Error Rate",
+        y1_label="Training Top-1 Error Rate",
+        y2_label="Validation Top-1 Error Rate",
+        title=f"Top-1 Error rate for {type(model).__name__}",
+        save=True,
+        save_path=f"./results/{type(model).__name__}_metric.png",
+        show=False,
+    )
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -501,7 +528,6 @@ def main(model_name, lr, batch_size, epochs, data_dir, seed):
     #######################
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     set_seed(seed)
-    
     
     checkpoint_name = os.path.join(
         os.path.dirname(__file__), "checkpoints", f"{model_name}_best.pt",
