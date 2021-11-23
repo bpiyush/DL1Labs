@@ -329,7 +329,7 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
                     > best_model["metrics"][monitor_metric["key"]]
 
         if save_current:
-            best_model["model"] = deepcopy(model.to("cpu"))
+            best_model["model"] = deepcopy(model).to("cpu")
             best_model["metrics"] = validation_metrics
             best_model["losses"] = validation_losses
             best_model["epoch"] = epoch
