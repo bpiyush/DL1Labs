@@ -1,0 +1,23 @@
+{
+    "clean": 0.8492879718542099,
+    "gaussian_noise_transform_1": 0.8271360695362091,
+    "gaussian_noise_transform_2": 0.7813488990068436,
+    "gaussian_noise_transform_3": 0.7087618708610535,
+    "gaussian_noise_transform_4": 0.5862341821193695,
+    "gaussian_noise_transform_5": 0.37707674503326416,
+    "gaussian_blur_transform_1": 0.849090188741684,
+    "gaussian_blur_transform_2": 0.8419699370861053,
+    "gaussian_blur_transform_3": 0.8132911324501038,
+    "gaussian_blur_transform_4": 0.7203322649002075,
+    "gaussian_blur_transform_5": 0.540941447019577,
+    "contrast_transform_1": 0.8370253145694733,
+    "contrast_transform_2": 0.8039952516555786,
+    "contrast_transform_3": 0.7513844966888428,
+    "contrast_transform_4": 0.6545688211917877,
+    "contrast_transform_5": 0.5050435066223145,
+    "jpeg_transform_1": 0.8405854403972626,
+    "jpeg_transform_2": 0.8272349685430527,
+    "jpeg_transform_3": 0.8154667764902115,
+    "jpeg_transform_4": 0.7964794337749481,
+    "jpeg_transform_5": 0.701246052980423
+}
