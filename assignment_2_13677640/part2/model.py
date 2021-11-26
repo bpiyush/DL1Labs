@@ -40,7 +40,18 @@ class LSTM(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.W_g = nn.Parameter(torch.zeros(self.hidden_dim, (self.hidden_dim + self.embed_dim)), requires_grad=True)
+        self.W_i = nn.Parameter(torch.zeros(self.hidden_dim, (self.hidden_dim + self.embed_dim)), requires_grad=True)
+        self.W_f = nn.Parameter(torch.zeros(self.hidden_dim, (self.hidden_dim + self.embed_dim)), requires_grad=True)
+        self.W_o = nn.Parameter(torch.zeros(self.hidden_dim, (self.hidden_dim + self.embed_dim)), requires_grad=True)
+        
+        self.b_g = nn.Parameter(torch.zeros(self.hidden_dim), requires_grad=True)
+        self.b_i = nn.Parameter(torch.zeros(self.hidden_dim), requires_grad=True)
+        self.b_f = nn.Parameter(torch.zeros(self.hidden_dim), requires_grad=True)
+        self.b_o = nn.Parameter(torch.zeros(self.hidden_dim), requires_grad=True)
+        
+        self.sigmoid = nn.Sigmoid()
+        self.tanh = nn.Tanh()
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -62,7 +73,12 @@ class LSTM(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        # initialize weight matrices
+        for W in [self.W_g, self.W_i, self.W_f, self.W_o]:
+            nn.init.uniform_(W, -(1.0 / math.sqrt(self.hidden_dim)), (1.0 / math.sqrt(self.hidden_dim)))
+        
+        # initialize bias for forget gate
+        nn.init.constant_(self.b_f, 1.0)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -85,7 +101,29 @@ class LSTM(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        T, B, _ = embeds.shape
+        
+        c_out, h_out = [torch.zeros(B, self.hidden_dim)] , [torch.zeros(B, self.hidden_dim)]
+        
+        for t in range(1, T):
+            x_t = embeds[t]
+            c_prev, h_prev = c_out[-1], h_out[-1]
+            
+            g = self.tanh(torch.matmul(torch.cat([x_t, h_prev], dim=1), self.W_g.T) + self.b_g)
+            i = self.sigmoid(torch.matmul(torch.cat([x_t, h_prev], dim=1), self.W_i.T) + self.b_i)
+            f = self.sigmoid(torch.matmul(torch.cat([x_t, h_prev], dim=1), self.W_f.T) + self.b_f)
+            o = self.sigmoid(torch.matmul(torch.cat([x_t, h_prev], dim=1), self.W_o.T) + self.b_o)
+            
+            c_t = f * c_prev + i * g
+            h_t = o * self.tanh(c_t)
+            
+            c_out.append(c_t)
+            h_out.append(h_t)
+
+        c_out = torch.stack(c_out, dim=0)
+        h_out = torch.stack(h_out, dim=0)
+
+        return h_out
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -160,3 +198,11 @@ class TextGenerationModel(nn.Module):
         #######################
         # END OF YOUR CODE    #
         #######################
+
+
+if __name__ == '__main__':
+    # Use this space to test your implementation and experiment.
+    lstm = LSTM(10, 20)
+    x = torch.randn(5, 4, 20)
+    h = lstm(x)
+    assert h.shape == torch.Size([5, 4, 10])
