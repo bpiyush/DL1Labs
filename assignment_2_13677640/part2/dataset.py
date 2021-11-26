@@ -59,3 +59,26 @@ def text_collate_fn(batch):
     inputs = torch.stack([item[:-1] for item in batch], dim=1)
     targets = torch.stack([item[1:] for item in batch], dim=1)
     return inputs, targets
+
+
+if __name__ == '__main__':
+
+    dataset = TextDataset(
+        filename="assets/book_EN_democracy_in_the_US.txt",
+        seq_length=100,
+        step_size=10,
+        random_select=True,
+    )
+    data_loader = data.DataLoader(
+        dataset,
+        batch_size=128,
+        shuffle=True,
+        drop_last=True,
+        pin_memory=True,
+        collate_fn=text_collate_fn,
+    )
+    
+    batch = next(iter(data_loader))
+    x, y = batch
+    assert x.shape == torch.Size([100, 128])
+    assert y.shape == torch.Size([100, 128])

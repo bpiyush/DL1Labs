@@ -195,9 +195,11 @@ class TextGenerationModel(nn.Module):
         # END OF YOUR CODE    #
         #######################
 
-    def forward(self, x, c_history=None, h_history=None):
+    def forward(self, x):
         """
         Forward pass.
+        Given (x1, x2, .., xt), it will return (y1, y2, .., yt) s.t.,
+        yt is the prediction of the next character given the previous characters.
 
         Args:
             x: input
@@ -211,12 +213,14 @@ class TextGenerationModel(nn.Module):
         # PUT YOUR CODE HERE  #
         #######################
         # x is of shape [sentence length, batch size]
-        embed = self.embedding(x)
-        c_history, h_history = self.lstm_cell(embed, c_history, h_history)
-        # no need to project h0
-        p_history = self.output_layer(h_history[1:])
+        assert len(x.shape) == 2
+        T, B = x.shape
         
-        return p_history, c_history, h_history
+        x = self.embedding(x)
+        h_seq, c_seq = self.lstm_cell(x)
+        p_seq = self.output_layer(h_seq)
+        
+        return p_seq
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -238,29 +242,29 @@ class TextGenerationModel(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        from tqdm import tqdm
         generated_text = torch.randint(0, self.vocabulary_size, (1, batch_size))
-        
-        iterator = tqdm(range(1, sample_length), desc="Generating text")
-        c_history, h_history = None, None
-        # import ipdb; ipdb.set_trace()
-        for t in iterator:
-            p, c_history, h_history = self.forward(generated_text, c_history, h_history)
-            print(c_history.shape, h_history.shape)
-            
-            # print(c_history.shape)
-            # if c_history.shape[0] > t + 1:
-            #     import ipdb; ipdb.set_trace()
-                
 
+        h = torch.zeros(batch_size, self.lstm_cell.hidden_dim)
+        c = torch.zeros(batch_size, self.lstm_cell.hidden_dim)
+        
+        for t in range(1, sample_length):
+            # get the hidden state of the previous time step
+            x_prev = self.embedding(generated_text[-1, :])
+            h, c = self.lstm_cell.forward_single_step(x_prev, h, c)
+            
+            # get the logits of the next character distribution
+            p = self.output_layer(h)
+
+            # get the next character
             if temperature == 0.:
                 next_char = p.argmax(dim=-1)
             else:
                 next_char = self.softmax(p / temperature)
-                next_char = torch.multinomial(next_char, 1)
+                next_char = torch.multinomial(next_char, 1).squeeze(1)
             
-            generated_text = torch.cat([generated_text, next_char], dim=0)
-        
+            # update generated test
+            generated_text = torch.cat((generated_text, next_char.unsqueeze(0)), dim=0)
+            
         return generated_text
         #######################
         # END OF YOUR CODE    #
@@ -276,19 +280,22 @@ if __name__ == '__main__':
     assert c_seq.shape == torch.Size([5, 4, 10])
     assert h_seq.shape == torch.Size([5, 4, 10])
     
-    # # test text generator
-    # text_generator = TextGenerationModel(
-    #     args=dict(vocabulary_size=10, embedding_size=20, lstm_hidden_dim=10),
-    # )
-    # x = torch.randint(0, 10, (30, 4))
-    # p, c, h = text_generator(x)
-    # assert p.shape == torch.Size([30, 4, 10])
+    # test text generator
+    text_generator = TextGenerationModel(
+        args=dict(vocabulary_size=10, embedding_size=20, lstm_hidden_dim=100),
+    )
+    print(text_generator)
+    x = torch.randint(0, 10, (30, 4))
+    y = text_generator(x)
+    assert y.shape == torch.Size([30, 4, 10])
     
-    # # generate using argmax sampling
-    # generated_text = text_generator.sample(temperature=0.)
-    # assert generated_text.shape == torch.Size([30, 4])
+    # generate using argmax sampling
+    generated_text = text_generator.sample(temperature=0.)
+    assert generated_text.shape == torch.Size([30, 4])
+    # print(f"Generated text with argmax: {generated_text}")
 
-    # # generate using softmax-with-temperate sampling
-    # generated_text = text_generator.sample(temperature=0.5)
-    # assert generated_text.shape == torch.Size([30, 4])
-    # import ipdb; ipdb.set_trace()
+    # generate using softmax-with-temperate sampling
+    generated_text = text_generator.sample(temperature=0.5)
+    assert generated_text.shape == torch.Size([30, 4])
+    # print(f"Generated text with softmax-with-temperature: {generated_text}")
+
