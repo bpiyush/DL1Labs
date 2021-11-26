@@ -14,6 +14,7 @@
 # Date Adapted: 2021-11-11
 ###############################################################################
 
+from argparse import Namespace
 import math
 import torch
 import torch.nn as nn
@@ -183,6 +184,9 @@ class TextGenerationModel(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+
+        if isinstance(args, Namespace):
+            args = vars(args)
         self.__dict__.update(args)
 
         self.embedding = nn.Embedding(self.vocabulary_size, self.embedding_size)
