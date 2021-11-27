@@ -71,7 +71,7 @@ def generate(args):
     # save generated text
     logs_dir = ckpt_dir.replace("checkpoints", "logs")
     os.makedirs(logs_dir, exist_ok=True)
-    save_path = os.path.join(logs_dir, f"{ckpt_name}_generated_text.txt")
+    save_path = os.path.join(logs_dir, f"{ckpt_name}_tau_{args.temperature}_generated_text.txt")
     save_txt(generated_text, save_path)
     print_update(f"Saved generated text to {save_path}")
 
