@@ -66,7 +66,7 @@ def train(args):
     set_seed(args.seed)
     
     # set directory to save model checkpoints
-    file_name = os.path.basename(args.txt_file)
+    file_name = os.path.basename(args.txt_file).split('.txt')[0]
     ckpt_dir = os.path.join(os.path.dirname(__file__), "checkpoints", file_name)
     os.makedirs(ckpt_dir, exist_ok=True)
     ckpt_path_template = os.path.join(
@@ -143,6 +143,10 @@ def train(args):
             epoch_iterator.set_description(display)
 
         epoch_losses.append(np.mean(batch_losses))
+        
+        # print summary
+        print(f"::::: Finished epoch {e}. Summary:")
+        print(f"::::: [Training] | Loss: {epoch_losses[-1]:.3f}")
         
         # update best model and save
         if best_ckpt["loss"] > epoch_losses[-1]:
