@@ -46,7 +46,18 @@ class MLP(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        super(MLP, self).__init__()
+
+        layers = []
+        in_channels= n_inputs
+        for out_channels in n_hidden:
+            layers += [
+                nn.Linear(in_channels, out_channels),
+                nn.ReLU(inplace=True),
+            ]
+            in_channels = out_channels
+        layers += [nn.Linear(in_channels, n_outputs)]
+        self.layers = nn.Sequential(*layers)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -65,7 +76,7 @@ class MLP(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        out = self.layers(x)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -150,3 +161,12 @@ class GNN(nn.Module):
         Returns the device on which the model is. Can be useful in some situations.
         """
         return next(self.parameters()).device
+
+if __name__ == "__main__":
+    # test your implementation
+    
+    mlp = MLP(n_inputs=3509, n_hidden=[10, 10], n_outputs=1)
+    print(mlp)
+    x = torch.randn(10, 3509)
+    y = mlp(x)
+    assert y.shape == torch.Size([10, 1])

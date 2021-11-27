@@ -148,3 +148,19 @@ def get_mlp_features(molecules: Batch) -> torch.Tensor:
     dense_adj = get_dense_adj(molecules)
     x = torch.cat([z_one_hot.flatten(1), dense_adj.flatten(1)], dim=1)
     return x
+
+
+if __name__ == "__main__":
+    from torch_geometric.loader import DataLoader
+
+    train, valid, test = get_qm9("./QM9/")
+    valid_dataloader = DataLoader(
+        valid, batch_size=128, exclude_keys=["pos", "idx", "z", "name"]
+    )
+    molecules = next(iter(valid_dataloader))
+
+    mlp_features = get_mlp_features(molecules)
+    assert mlp_features.shape == (128, FLAT_INPUT_DIM)
+    
+    node_features = get_node_features(molecules)
+    assert node_features.shape == (2313, Z_ONE_HOT_DIM)

@@ -28,6 +28,7 @@ from tqdm import tqdm
 
 from data import *
 from networks import *
+from utils import print_update, plot_sequences
 
 
 def permute_indices(molecules: Batch) -> Batch:
@@ -83,7 +84,13 @@ def compute_loss(
     #######################
     # PUT YOUR CODE HERE  #
     #######################
+    # model = model.train()
+    
+    if isinstance(model, MLP):
+        y_hat = model(get_mlp_features(molecules))
 
+    y = get_labels(molecules).unsqueeze(1)
+    loss = criterion(y_hat, y)
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -116,7 +123,24 @@ def evaluate_model(
     #######################
     # PUT YOUR CODE HERE  #
     #######################
+    model = model.eval()
 
+    losses = []
+    iterator = tqdm(data_loader, desc=f"::::: Evaluating | ")
+    for batch in iterator:
+        
+        if permute:
+            batch = permute_indices(batch)
+
+        loss = compute_loss(model, batch, criterion)
+
+        losses.append(loss.item())
+        
+        display = f"::::: Evaluating | {loss.item():.8f}"
+        iterator.set_description(display)
+
+    avg_loss = np.mean(losses)
+    print(f"::::: Evaluation finished on data_loader with loss: {loss}")
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -185,22 +209,77 @@ def train(
     #######################
 
     # TODO: Initialize loss module and optimizer
-    criterion = ...
-    optimizer = ...
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, amsgrad=True)
+
     # TODO: Training loop including validation, using evaluate_model
     # TODO: Do optimization, we used adam with amsgrad. (many should work)
-    val_losses = ...
+
+    train_losses = []
+    valid_losses = []
+
+    best_model = {
+        "model": None,
+        "valid_loss": np.inf,
+        "epoch": None,
+    }
+
+    for epoch in range(epochs):
+
+        # training loop
+        train_batch_losses = []
+        iterator = tqdm(train_dataloader, desc=f"::::: Training | Epoch {epoch} | ")
+        model = model.train()
+        for batch in iterator:
+            batch = batch.to(model.device)
+            
+            optimizer.zero_grad()
+
+            loss = compute_loss(model, batch, criterion)
+
+            loss.backward()
+            optimizer.step()
+
+            train_batch_losses.append(loss.item())
+            
+            display = f"::::: Training | Epoch {epoch} | {loss.item():.8f}"
+            iterator.set_description(display)
+        train_losses.append(np.mean(train_batch_losses))
+
+        # evaluate on validation set
+        loss = evaluate_model(model, valid_dataloader, criterion, permute=False)
+        valid_losses.append(loss)
+
+        # display epoch losses
+        print(f"::::: Finished | Epoch {epoch} ")
+        print(f"::::: Training | Loss: {train_losses[-1]:.8f}")
+        print(f"::::: Validate | Loss: {valid_losses[-1]:.8f}")
+
+        # save best model
+        if best_model["model"] is None or valid_losses[-1] < best_model["valid_loss"]:
+            best_model["model"] = deepcopy(model)
+            best_model["valid_loss"] = valid_losses[-1]
+            best_model["epoch"] = epoch
+            print(f"::::: Saving best model so far with validation loss {valid_losses[-1]:.8f} (epoch {epoch})")
+
+        print(f"{'- -' * 50}")
+
     # TODO: Test best model
-    test_loss = ...
+    test_loss = evaluate_model(best_model["model"], test_dataloader, criterion, permute=False)
+
     # TODO: Test best model against permuted indices
-    permuted_test_loss = ...
+    permuted_test_loss = evaluate_model(best_model["model"], test_dataloader, criterion, permute=True)
+
     # TODO: Add any information you might want to save for plotting
-    logging_info = ...
+    logging_info = {
+        "train_losses": train_losses,
+        "valid_losses": valid_losses,
+    }
 
     #######################
     # END OF YOUR CODE    #
     #######################
-    return model, test_loss, permuted_test_loss, val_losses, logging_info
+    return model, test_loss, permuted_test_loss, valid_losses, logging_info
 
 
 def main(**kwargs):
@@ -232,6 +311,23 @@ def main(**kwargs):
     )
 
     # plot the loss curve, etc. below.
+    print(f"::::: Summary :::::")
+    print(f"::::: Test loss (without permutation): {test_loss}")
+    print(f"::::: Test loss (with permutation): {permuted_test_loss}")
+    print(f"::::: Plotting validation losses")
+    plot_sequences(
+        x=range(1, args.epochs + 1),
+        y1=val_losses,
+        y2=[],
+        x_label="Epoch",
+        y_label="Loss",
+        y1_label="Validation Loss",
+        y2_label=None,
+        title=f"{type(model).__name__}: (Test loss (without/with permutation): {test_loss:.8f}/{permuted_test_loss:.8f})",
+        save=True,
+        save_path=f"./results/{type(model).__name__}_loss.png",
+        show=False,
+    )
 
 
 if __name__ == "__main__":
