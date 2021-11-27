@@ -8,6 +8,7 @@
 # model
 *.pt
 *.pt.tar
+**/logs/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

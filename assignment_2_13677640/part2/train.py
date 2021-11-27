@@ -27,6 +27,7 @@ from torch.utils.data import DataLoader
 
 from dataset import TextDataset, text_collate_fn
 from model import TextGenerationModel
+from utils import print_update
 
 
 def set_seed(seed):
@@ -108,6 +109,8 @@ def train(args):
     
     # Training loop
     for e in range(1, args.num_epochs + 1):
+        print_update(f"Started epoch {e}")
+        
         # Train model
         model.train()
         
@@ -145,8 +148,7 @@ def train(args):
         epoch_losses.append(np.mean(batch_losses))
         
         # print summary
-        print(f"::::: Finished epoch {e}. Summary:")
-        print(f"::::: [Training] | Loss: {epoch_losses[-1]:.3f}")
+        print(f"::::: [Training] | Epoch: {e} | Loss: {epoch_losses[-1]:.3f}")
         
         # update best model and save
         if best_ckpt["loss"] > epoch_losses[-1]:
@@ -172,6 +174,8 @@ def train(args):
             }
             torch.save(ckpt, ckpt_path)
             print(f"::::: Saved checkpoint to {ckpt_path}")
+        
+        print_update(f"Finished epoch {e}")
     #######################
     # END OF YOUR CODE    #
     #######################
