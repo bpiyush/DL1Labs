@@ -187,7 +187,7 @@ class GNN(nn.Module):
                 x = l(x)
 
         # global average pooling
-        x = geom_nn.global_mean_pool(x, batch_idx)
+        x = geom_nn.global_add_pool(x, batch_idx)
         
         # return the output
         out = self.head(x)
@@ -206,7 +206,7 @@ class GNN(nn.Module):
 if __name__ == "__main__":
     # test your implementation
     from torch_geometric.loader import DataLoader
-    from data import get_qm9, EDGE_ATTR_DIM
+    from data import get_qm9, EDGE_ATTR_DIM, Z_ONE_HOT_DIM
     
     mlp = MLP(n_inputs=3509, n_hidden=[10, 10], n_outputs=1)
     print(mlp)
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     
     
     gnn = GNN(
-        n_node_features=5,
+        n_node_features=Z_ONE_HOT_DIM,
         n_edge_features=EDGE_ATTR_DIM,
         n_hidden=10,
         n_output=1,

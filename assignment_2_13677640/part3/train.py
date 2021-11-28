@@ -28,7 +28,7 @@ from tqdm import tqdm
 
 from data import *
 from networks import *
-from utils import print_update, plot_sequences
+from utils import plot_sequences
 
 
 def permute_indices(molecules: Batch) -> Batch:
@@ -87,7 +87,16 @@ def compute_loss(
     # model = model.train()
     
     if isinstance(model, MLP):
-        y_hat = model(get_mlp_features(molecules))
+        x = get_mlp_features(molecules)
+        y_hat = model(x)
+    elif isinstance(model, GNN):
+        x = molecules.x[:, :Z_ONE_HOT_DIM]
+        y_hat = model(
+            x=x,
+            edge_index=molecules.edge_index,
+            edge_attr=molecules.edge_attr,
+            batch_idx=molecules.batch,
+        )
 
     y = get_labels(molecules).unsqueeze(1)
     loss = criterion(y_hat, y)
@@ -127,17 +136,18 @@ def evaluate_model(
 
     losses = []
     iterator = tqdm(data_loader, desc=f"::::: Evaluating | ")
-    for batch in iterator:
-        
-        if permute:
-            batch = permute_indices(batch)
+    with torch.no_grad():
+        for batch in iterator:
+            
+            if permute:
+                batch = permute_indices(batch)
 
-        loss = compute_loss(model, batch, criterion)
+            loss = compute_loss(model, batch, criterion)
 
-        losses.append(loss.item())
-        
-        display = f"::::: Evaluating | {loss.item():.8f}"
-        iterator.set_description(display)
+            losses.append(loss.item())
+            
+            display = f"::::: Evaluating | {loss.item():.8f}"
+            iterator.set_description(display)
 
     avg_loss = np.mean(losses)
     print(f"::::: Evaluation finished on data_loader with loss: {loss}")
