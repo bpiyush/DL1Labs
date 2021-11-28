@@ -14,6 +14,8 @@
 # Date Created: 2021-11-17
 ################################################################################
 from __future__ import absolute_import, division, print_function
+from os import lseek
+from numpy.lib.arraysetops import isin
 
 import torch
 import torch.nn as nn
@@ -119,7 +121,30 @@ class GNN(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        super(GNN, self).__init__()
+
+        layers = []
+        in_channels= n_node_features
+        for _ in range(num_convolution_blocks):
+            out_channels = n_hidden
+            layers += [
+                nn.ReLU(),
+                geom_nn.RGCNConv(
+                    in_channels=in_channels,
+                    out_channels=n_hidden,
+                    num_relations=n_edge_features,
+                ),
+                nn.ReLU(),
+                geom_nn.MFConv(out_channels, out_channels),
+            ]
+            in_channels = out_channels
+        self.layers = nn.ModuleList(layers)
+
+        self.head = nn.Sequential(
+            nn.Linear(n_hidden, n_hidden),
+            nn.ReLU(inplace=True),
+            nn.Linear(n_hidden, n_output),
+        )
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -149,7 +174,23 @@ class GNN(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        # inverse one-hot encoding for edge_attr
+        edge_attr = edge_attr.argmax(dim=1)
         
+        # pass through the gnn layers
+        for l in self.layers:
+            if isinstance(l, geom_nn.RGCNConv):
+                x = l(x, edge_index, edge_attr)
+            elif isinstance(l, geom_nn.MFConv):
+                x = l(x, edge_index)
+            else:
+                x = l(x)
+
+        # global average pooling
+        x = geom_nn.global_mean_pool(x, batch_idx)
+        
+        # return the output
+        out = self.head(x)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -164,9 +205,35 @@ class GNN(nn.Module):
 
 if __name__ == "__main__":
     # test your implementation
+    from torch_geometric.loader import DataLoader
+    from data import get_qm9, EDGE_ATTR_DIM
     
     mlp = MLP(n_inputs=3509, n_hidden=[10, 10], n_outputs=1)
     print(mlp)
     x = torch.randn(10, 3509)
     y = mlp(x)
     assert y.shape == torch.Size([10, 1])
+    
+    
+    gnn = GNN(
+        n_node_features=5,
+        n_edge_features=EDGE_ATTR_DIM,
+        n_hidden=10,
+        n_output=1,
+        num_convolution_blocks=2,
+    )
+    print(gnn)
+
+    train, valid, test = get_qm9("./QM9/")
+    valid_dataloader = DataLoader(
+        valid, batch_size=128, exclude_keys=["pos", "idx", "z", "name"]
+    )
+    molecules = next(iter(valid_dataloader))
+
+    x = molecules.x[:, :5]
+    edge_index = molecules.edge_index
+    edge_attr = molecules.edge_attr
+    batch_idx = molecules.batch
+    y = gnn(x=x, edge_index=edge_index, edge_attr=edge_attr, batch_idx=batch_idx)
+    assert y.shape == torch.Size([128, 1])
+    
