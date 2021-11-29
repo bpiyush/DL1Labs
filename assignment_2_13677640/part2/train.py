@@ -27,7 +27,7 @@ from torch.utils.data import DataLoader
 
 from dataset import TextDataset, text_collate_fn
 from model import TextGenerationModel
-from utils import print_update
+from utils import print_update, plot_sequences
 
 
 def set_seed(seed):
@@ -130,9 +130,10 @@ def train(args):
             y_hat = model(x)
             
             # compute loss
-            loss = criterion(y_hat.permute((0, 2, 1)), y)
+            # convert y_hat to [B, C, T] and y to [B, T]
+            loss = criterion(y_hat.permute((1, 2, 0)), y.permute((1, 0)))
             # sum loss across time steps and mean across examples in batch
-            loss = loss.mean(dim=0).mean(dim=0)
+            loss = loss.mean(dim=-1).mean(dim=0)
             
             # backpropagate and update parameters
             loss.backward()
@@ -176,6 +177,20 @@ def train(args):
             print(f"::::: Saved checkpoint to {ckpt_path}")
         
         print_update(f"Finished epoch {e}")
+
+    plot_sequences(
+        x=range(1, args.num_epochs + 1),
+        y1=epoch_losses,
+        y2=[],
+        x_label="Epoch",
+        y_label="Loss",
+        y1_label="Train Loss",
+        y2_label=None,
+        title=f"{type(model).__name__}: Train loss vs Epochs",
+        save=True,
+        save_path=f"./results/{file_name}_loss.png",
+        show=False,
+    )
     #######################
     # END OF YOUR CODE    #
     #######################
