@@ -98,8 +98,9 @@ def train(args):
     # Define loss criterion
     criterion = nn.CrossEntropyLoss(reduction="none")
     
-    # To collect epoch losses
+    # To collect epoch losses/accuracies
     epoch_losses = []
+    epoch_accuracies = []
 
     # To collect best model (based on training loss)
     best_ckpt = {
@@ -114,8 +115,9 @@ def train(args):
         # Train model
         model.train()
         
-        # To collect batch losses
+        # To collect batch losses/accuracies
         batch_losses = []
+        batch_accuracies = []
         epoch_iterator = tqdm(data_loader, desc=f"Epoch {e}")
 
         for batch in epoch_iterator:
@@ -139,17 +141,27 @@ def train(args):
             loss.backward()
             optimizer.step()
 
+            # get loss
             loss_scalar = loss.item()
             batch_losses.append(loss_scalar)
             
+            # get accuracy
+            accuracy_scalar = torch.mean((y == y_hat.argmax(dim=-1)).float()).item()
+            batch_accuracies.append(accuracy_scalar)
+            
             # update the display
-            display = f"::::: [Training] | Epoch {e} | Loss: {loss_scalar:.3f} | "
+            display = f"::::: [Training] | Epoch {e} | Loss: {loss_scalar:.3f} | "\
+                f"| Accuracy: {accuracy_scalar:.3f} | "
             epoch_iterator.set_description(display)
 
         epoch_losses.append(np.mean(batch_losses))
+        epoch_accuracies.append(np.mean(batch_accuracies))
         
         # print summary
-        print(f"::::: [Training] | Epoch: {e} | Loss: {epoch_losses[-1]:.3f}")
+        print(
+            f"::::: [Training] | Epoch: {e} | Loss: {epoch_losses[-1]:.3f}"\
+            f" | Accuracy: {accuracy_scalar:.3f} | "
+        )
         
         # update best model and save
         if best_ckpt["loss"] > epoch_losses[-1]:
@@ -189,6 +201,19 @@ def train(args):
         title=f"{type(model).__name__}: Train loss vs Epochs",
         save=True,
         save_path=f"./results/{file_name}_loss.png",
+        show=False,
+    )
+    plot_sequences(
+        x=range(1, args.num_epochs + 1),
+        y1=epoch_accuracies,
+        y2=[],
+        x_label="Epoch",
+        y_label="Accuracy",
+        y1_label="Train Accuracy",
+        y2_label=None,
+        title=f"{type(model).__name__}: Train Accuracy vs Epochs",
+        save=True,
+        save_path=f"./results/{file_name}_accuracy.png",
         show=False,
     )
     #######################
