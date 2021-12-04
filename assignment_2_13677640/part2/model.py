@@ -84,7 +84,7 @@ class LSTM(nn.Module):
         # END OF YOUR CODE    #
         #######################
     
-    def forward_single_step(self, x, h_prev, c_prev):
+    def forward_single_step(self, x, h_prev=None, c_prev=None):
         """
         Performs forward pass of a batch of inputs at a given time t.
         
@@ -100,6 +100,11 @@ class LSTM(nn.Module):
         # sanity check the shape of x
         assert len(x.shape) == 2
         assert x.shape[1] == self.embed_dim
+        
+        if h_prev is None:
+            h_prev = torch.zeros(x.shape[0], self.hidden_dim)
+        if c_prev is None:
+            c_prev = torch.zeros(x.shape[0], self.hidden_dim)
         
         # concatenate x and h_prev
         concat = torch.cat((x, h_prev), dim=-1)

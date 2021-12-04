@@ -2,7 +2,7 @@
 Script to generate text from pretrained TextGenerationModel.
 
 Example:
->>> pyrhon generate.py --ckpt_path ./checkpoints/book_EN_grimms_fairy_tails/ckpt_epoch_best.pt.tar
+>>> python generate.py --ckpt_path ./checkpoints/book_EN_grimms_fairy_tails/ckpt_epoch_best.pt.tar
 """
 
 import os
