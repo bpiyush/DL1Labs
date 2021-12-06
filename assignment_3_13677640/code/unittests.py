@@ -29,7 +29,7 @@ The following variables determine which training file to check.
 - Set TEST_LIGHTNING to True if you are using train_pl.py
 - Set TEST_TORCH to True if you are using train_torch.py
 """
-TEST_LIGHTNING = False
+TEST_LIGHTNING = True
 TEST_TORCH = False
 
 if not (TEST_LIGHTNING or TEST_TORCH):
@@ -258,10 +258,10 @@ if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestBPD)
     unittest.TextTestRunner(verbosity=2).run(suite)
 
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestCNNEncoderDecoder)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestLoader().loadTestsFromTestCase(TestCNNEncoderDecoder)
+    # unittest.TextTestRunner(verbosity=2).run(suite)
 
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestVAE)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestLoader().loadTestsFromTestCase(TestVAE)
+    # unittest.TextTestRunner(verbosity=2).run(suite)
 
 
