@@ -89,8 +89,24 @@ def visualize_manifold(decoder, grid_size=20):
     # - You can use torchvision's function "make_grid" to combine the grid_size**2 images into a grid
     # - Remember to apply a sigmoid after the decoder
 
-    img_grid = None
-    raise NotImplementedError
+    # construct the grid of percentiles
+    percentiles = torch.tensor([(i - 0.5) / grid_size for i in range(1, grid_size + 1)])
+    grid_z1, grid_z2 = torch.meshgrid(percentiles, percentiles, indexing='ij')
+    
+    # get the latent space values at the percentiles
+    z1 = torch.distributions.Normal(0, 1).icdf(grid_z1)
+    z2 = torch.distributions.Normal(0, 1).icdf(grid_z2)
+    z = torch.stack([z1, z2], dim=2).view(-1, 2)
+
+    # get reconstructions
+    x = decoder(z)
+    x = torch.sigmoid(x)
+    x = x.argmax(dim=1).unsqueeze(1)
+    # convert to [0, 1] floats
+    x = (x / 16.0).float()
+
+    # construct the image grid
+    img_grid = make_grid(x, nrow=grid_size)
 
     return img_grid
 

@@ -177,7 +177,7 @@ class GenerateCallback(pl.Callback):
         x_samples = x_samples.cpu().detach()
 
         # bring values in float range [0,1]
-        x_samples = x_samples / 16.0
+        x_samples = (x_samples / 16.0).float()
 
         # create a grid
         grid = make_grid(x_samples, nrow=4, ncols=4)
