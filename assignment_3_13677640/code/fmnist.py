@@ -31,6 +31,10 @@ class Binarize:
         return (img > self.threshold).float()
 
 
+def rescale(x):
+    return (x*16).long().clamp_(max=15)
+
+
 def fmnist(root='../data/', batch_size=128, num_workers=4, download=True):
     """
     Returns data loaders for 4-bit FashionMNIST dataset, i.e. values between 0 and 15.
@@ -45,7 +49,7 @@ def fmnist(root='../data/', batch_size=128, num_workers=4, download=True):
                    root directory.
     """
     data_transforms = transforms.Compose([transforms.ToTensor(),
-                                          transforms.Lambda(lambda x: (x*16).long().clamp_(max=15))
+                                          transforms.Lambda(rescale),
                                         ])
 
     dataset = torchvision.datasets.FashionMNIST(

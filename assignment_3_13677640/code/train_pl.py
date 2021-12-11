@@ -98,8 +98,10 @@ class VAE(pl.LightningModule):
             x_samples - Sampled, 4-bit images. Shape: [B,C,H,W]
         """
         z_prior = torch.randn(batch_size, self.hparams.z_dim, device=self.decoder.device)
-        x_samples = self.decoder(z_prior)
-        x_samples = x_samples.argmax(dim=1).unsqueeze(1)
+        logits_x_given_z = self.decoder(z_prior)
+        P = F.softmax(logits_x_given_z, dim=1)
+        Q = P.permute((0, 2, 3, 1)).reshape((-1, 16))
+        x_samples = torch.multinomial(Q, 1).reshape((batch_size, 28, 28, 1)).permute((0, 3, 1, 2))
         return x_samples
 
     def configure_optimizers(self):
