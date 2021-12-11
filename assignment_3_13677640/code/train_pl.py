@@ -85,8 +85,6 @@ class VAE(pl.LightningModule):
 
         # bits per dimension
         bpd = elbo_to_bpd(L_rec + L_reg, imgs.shape)
-        
-        # assert self.sample(imgs.shape[0]).shape == imgs.shape
 
         return L_rec, L_reg, bpd
 
