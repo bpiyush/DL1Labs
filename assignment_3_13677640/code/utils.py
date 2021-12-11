@@ -48,7 +48,7 @@ def KLD(mean, log_std):
         KLD - Tensor with one less dimension than mean and log_std (summed over last dimension).
               The values represent the Kullback-Leibler divergence to unit Gaussians.
     """
-
+    # sum across dimensions for each distribution
     KLD = 0.5 * (log_std.exp().pow(2) + mean.pow(2) - 1 - 2 * log_std).sum(-1)
     return KLD
 

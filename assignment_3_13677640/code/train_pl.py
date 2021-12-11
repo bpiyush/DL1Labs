@@ -65,11 +65,23 @@ class VAE(pl.LightningModule):
         #   latent space, and decoding.
         # - You might find loss functions defined in torch.nn.functional 
         #   helpful for the reconstruction loss
+        mean, log_std = self.encoder(imgs)
+        z = sample_reparameterize(mean, log_std.exp())
+        x_rec = self.decoder(z)
 
-        L_rec = None
-        L_reg = None
-        bpd = None
-        raise NotImplementedError
+        # reconstruction loss: cross entropy over pixels
+        L_rec = torch.nn.functional.cross_entropy(x_rec, imgs.squeeze(1), reduction="none")
+        # sum across pixels and mean across batch
+        L_rec = L_rec.mean(dim=0).sum()
+
+        # regularization loss: KL divergence
+        L_reg = KLD(mean, log_std)
+        # mean across batch
+        L_reg = L_reg.mean(0)
+
+        # bits per dimension
+        bpd = elbo_to_bpd(L_rec + L_reg, imgs.shape)
+
         return L_rec, L_reg, bpd
 
     @torch.no_grad()
@@ -81,7 +93,9 @@ class VAE(pl.LightningModule):
         Outputs:
             x_samples - Sampled, 4-bit images. Shape: [B,C,H,W]
         """
-        x_samples = None
+        z_prior = torch.randn(batch_size, self.hparams.z_dim, device=self.decoder.device)
+        x_samples = self.decoder(z_prior)
+        import ipdb; ipdb.set_trace()
         raise NotImplementedError
         return x_samples
 
