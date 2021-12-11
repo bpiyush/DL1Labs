@@ -91,17 +91,15 @@ class CNNDecoder(nn.Module):
             act_fn()
         )
         self.net = nn.Sequential(
-            nn.ConvTranspose2d(2*c_hid, 2*c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 4x4 => 8x8
+            nn.ConvTranspose2d(2*c_hid, 2*c_hid, kernel_size=3, output_padding=0, padding=1, stride=2), # 4x4 => 7x7
             act_fn(),
             nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1),
             act_fn(),
-            nn.ConvTranspose2d(2*c_hid, c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 8x8 => 16x16
+            nn.ConvTranspose2d(2*c_hid, c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 7x7 => 14x14
             act_fn(),
             nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
             act_fn(),
-            # nn.ConvTranspose2d(c_hid, num_input_channels, kernel_size=3, output_padding=1, padding=1, stride=2), # 16x16 => 32x32
-            nn.ConvTranspose2d(c_hid, num_input_channels, kernel_size=2, output_padding=0, padding=2, stride=2), # 16x16 => 28x28
-            nn.Tanh() # The input images is scaled between -1 and 1, hence the output has to be bounded as well
+            nn.ConvTranspose2d(c_hid, num_input_channels, kernel_size=3, output_padding=1, padding=1, stride=2), # 14x14 => 28x28
         )
 
     def forward(self, z):
@@ -127,3 +125,18 @@ class CNNDecoder(nn.Module):
         """
         return next(self.parameters()).device
 
+
+if __name__ == '__main__':
+    from torchsummary import summary
+
+    # Test the CNNEncoder and CNNDecoder
+    decoder = CNNDecoder()
+    z = torch.randn(1, 20)
+    x = decoder(z)
+    print(x.min(), x.max())
+    summary(decoder, (20,))
+
+    encoder = CNNEncoder()
+    x = torch.randn(1, 1, 28, 28)
+    z = encoder(x)
+    summary(encoder, (1, 28, 28))
