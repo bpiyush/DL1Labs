@@ -173,14 +173,14 @@ class GenerateCallback(pl.Callback):
         # - Use the torchvision function "save_image" to save an image grid to disk
 
         # sample from the model
-        x_samples = pl_module.sample(16)
+        x_samples = pl_module.sample(64)
         x_samples = x_samples.cpu().detach()
 
         # bring values in float range [0,1]
         x_samples = (x_samples / 16.0).float()
 
         # create a grid
-        grid = make_grid(x_samples, nrow=4, ncols=4)
+        grid = make_grid(x_samples, nrow=8, ncols=8)
 
         # add to tensorboard
         tb = trainer.logger.experiment
@@ -188,7 +188,7 @@ class GenerateCallback(pl.Callback):
 
         # save to disk
         if self.save_to_disk:
-            save_image(x_samples, trainer.logger.log_dir + "/samples_epoch_{}.png".format(epoch))
+            save_image(grid, trainer.logger.log_dir + "/samples_epoch_{}.png".format(epoch))
 
 
 def train_vae(args):
