@@ -1,9 +1,11 @@
-# slurm
+# slurm/logs
 *slurm_output*
+**/VAE_logs/*
 
 # data
 **/data/cifar*
 *.DS_Store
+**/data/FashionMNIST*
 
 # model
 *.pt

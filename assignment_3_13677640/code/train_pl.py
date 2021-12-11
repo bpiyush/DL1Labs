@@ -85,6 +85,8 @@ class VAE(pl.LightningModule):
 
         # bits per dimension
         bpd = elbo_to_bpd(L_rec + L_reg, imgs.shape)
+        
+        # assert self.sample(imgs.shape[0]).shape == imgs.shape
 
         return L_rec, L_reg, bpd
 
@@ -99,8 +101,7 @@ class VAE(pl.LightningModule):
         """
         z_prior = torch.randn(batch_size, self.hparams.z_dim, device=self.decoder.device)
         x_samples = self.decoder(z_prior)
-        import ipdb; ipdb.set_trace()
-        raise NotImplementedError
+        x_samples = x_samples.argmax(dim=1).unsqueeze(1)
         return x_samples
 
     def configure_optimizers(self):
@@ -171,7 +172,23 @@ class GenerateCallback(pl.Callback):
         # - Use the torchvision function "make_grid" to create a grid of multiple images
         # - Use the torchvision function "save_image" to save an image grid to disk
 
-        raise NotImplementedError
+        # sample from the model
+        x_samples = pl_module.sample(16)
+        x_samples = x_samples.cpu().detach()
+
+        # bring values in float range [0,1]
+        x_samples = x_samples / 16.0
+
+        # create a grid
+        grid = make_grid(x_samples, nrow=4, ncols=4)
+
+        # add to tensorboard
+        tb = trainer.logger.experiment
+        tb.add_image("samples", grid, epoch)
+
+        # save to disk
+        if self.save_to_disk:
+            save_image(x_samples, trainer.logger.log_dir + "/samples_epoch_{}.png".format(epoch))
 
 
 def train_vae(args):
