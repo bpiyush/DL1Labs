@@ -85,6 +85,8 @@ class VAE(pl.LightningModule):
 
         # bits per dimension
         bpd = elbo_to_bpd(L_rec + L_reg, imgs.shape)
+        
+        # assert self.sample(imgs.shape[0]).shape == imgs.shape
 
         return L_rec, L_reg, bpd
 
@@ -99,8 +101,7 @@ class VAE(pl.LightningModule):
         """
         z_prior = torch.randn(batch_size, self.hparams.z_dim, device=self.decoder.device)
         x_samples = self.decoder(z_prior)
-        import ipdb; ipdb.set_trace()
-        raise NotImplementedError
+        x_samples = x_samples.argmax(dim=1).unsqueeze(1)
         return x_samples
 
     def configure_optimizers(self):
