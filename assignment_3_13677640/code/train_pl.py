@@ -65,8 +65,12 @@ class VAE(pl.LightningModule):
         #   latent space, and decoding.
         # - You might find loss functions defined in torch.nn.functional 
         #   helpful for the reconstruction loss
+        
+        # encoder forward pass
         mean, log_std = self.encoder(imgs)
         z = sample_reparameterize(mean, log_std.exp())
+        
+        # decoder forward pass
         x_rec = self.decoder(z)
 
         # reconstruction loss: cross entropy over pixels
