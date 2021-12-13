@@ -100,10 +100,13 @@ def visualize_manifold(decoder, grid_size=20):
 
     # get reconstructions
     x = decoder(z)
-    x = torch.sigmoid(x)
-    x = x.argmax(dim=1).unsqueeze(1)
+
+    P = torch.nn.functional.softmax(x, dim=1)
+    Q = P.permute((0, 2, 3, 1)).reshape((-1, 16))
+    x = torch.multinomial(Q, 1).reshape((grid_size * grid_size, 28, 28, 1)).permute((0, 3, 1, 2))
+
     # convert to [0, 1] floats
-    x = (x / 16.0).float()
+    x = (x / 15.0).float()
 
     # construct the image grid
     img_grid = make_grid(x, nrow=grid_size)
