@@ -64,7 +64,7 @@ def elbo_to_bpd(elbo, img_shape):
     """
     _, channels, height, width = img_shape
     dim_prod = channels * height * width
-    bpd = elbo * np.log2(np.exp(1)) / dim_prod
+    bpd = torch.mean(elbo) * np.log2(np.exp(1)) / dim_prod
     return bpd
 
 

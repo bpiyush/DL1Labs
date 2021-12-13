@@ -75,18 +75,18 @@ class VAE(pl.LightningModule):
 
         # reconstruction loss: cross entropy over pixels
         L_rec = torch.nn.functional.cross_entropy(x_rec, imgs.squeeze(1), reduction="none")
-        # sum across pixels and mean across batch
-        L_rec = L_rec.mean(dim=0).sum()
+        # sum across pixels and mean across batch (mean later)
+        L_rec = L_rec.sum(dim=(1, 2))
 
         # regularization loss: KL divergence
         L_reg = KLD(mean, log_std)
-        # mean across batch
-        L_reg = L_reg.mean(0)
+        # mean across batch (later)
+        # L_reg = L_reg.mean(0)
 
         # bits per dimension
         bpd = elbo_to_bpd(L_rec + L_reg, imgs.shape)
 
-        return L_rec, L_reg, bpd
+        return L_rec.mean(), L_reg.mean(), bpd
 
     @torch.no_grad()
     def sample(self, batch_size):
