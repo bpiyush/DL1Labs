@@ -15,7 +15,7 @@ Labs for Deep Learning 1 course at UvA
 
 Intructor: Katia Shutova
 
-**Week 1**:
+**Orderered recordings**
   * [Language modelling](https://webcolleges.uva.nl/Mediasite/Play/ed24f15464dc43dcbafdb9e8c0c700d81d)
   * [POS Tagging](https://webcolleges.uva.nl/Mediasite/Play/c44f96cb9b18474ab23b66a40691fa641d)
   * [Morphology Processing](https://webcolleges.uva.nl/Mediasite/Play/4bd1dada1d6143369f90057ae8e6358f1d)
