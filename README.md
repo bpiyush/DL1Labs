@@ -15,6 +15,17 @@ Labs for Deep Learning 1 course at UvA
 
 Instructor: Xiantong 
 
+**Fundamentals of deep learning**
+* [Introduction to DL](https://webcolleges.uva.nl/Mediasite/Play/7a54cba3e7714571bd9784deb71914fe1d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=2972&autoStart=true)
+* [Deep Feedforward Nets](https://webcolleges.uva.nl/Mediasite/Play/62fb58d53268416cbcdf3ac31ac824e01d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=3726&autoStart=true)
+* [Optimization for deep learning](https://webcolleges.uva.nl/Mediasite/Play/4569d4340d31420590ef20becb4051201d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=1717&autoStart=true)
+* [Regularization](https://webcolleges.uva.nl/Mediasite/Play/edc410506cab4f9dbeca9303a426a2e51d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=2219&autoStart=true)
+
+**Deep learning for vision**
+
+* [CNNs](https://webcolleges.uva.nl/Mediasite/Play/dcf2b5f3cdf1491ea340539c736ce0821d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=482&autoStart=true)
+* [Modern ConvNets](https://webcolleges.uva.nl/Mediasite/Play/ea0d94270851425dbc086bc57854e28b1d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=980&autoStart=true)
+
 **Deep learning for sequential processing**
 * [RNNs](https://webcolleges.uva.nl/Mediasite/Play/78a424f3dd7b47c88f970f796d5a482f1d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=1223&autoStart=true)
 * [Attention and Transformers](https://webcolleges.uva.nl/Mediasite/Play/dbc1d3a888434c76adecb6bff61cfa881d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=3229&autoStart=true)
