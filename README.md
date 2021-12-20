@@ -41,6 +41,8 @@ Instructor: Xiantong
 * [Meta-learning 2](https://webcolleges.uva.nl/Mediasite/Play/c56c6ad5664b4ca0ae5f90619b6319911d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=2223&autoStart=true)
 
 
+### NLP Lectures
+
 Intructor: Katia Shutova
 
 **Orderered recordings**
