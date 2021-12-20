@@ -13,6 +13,23 @@ Labs for Deep Learning 1 course at UvA
 
 ### Lecture Content (Videos)
 
+Instructor: Xiantong 
+
+**Deep learning for sequential processing**
+* [RNNs](https://webcolleges.uva.nl/Mediasite/Play/78a424f3dd7b47c88f970f796d5a482f1d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=1223&autoStart=true)
+* [Attention and Transformers](https://webcolleges.uva.nl/Mediasite/Play/dbc1d3a888434c76adecb6bff61cfa881d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=3229&autoStart=true)
+
+**Generative models**
+* [Variational autoencoders](https://webcolleges.uva.nl/Mediasite/Play/f5a4f07e11e24894914b369120133d251d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=1222&autoStart=true)
+* [GANs](https://webcolleges.uva.nl/Mediasite/Play/4fd8660d64d54e2f8e21dce91fbfa3371d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=718&autoStart=true)
+
+**Assorted topics**
+* [Graph Neural networks](https://webcolleges.uva.nl/Mediasite/Play/ba5ba929aed249ed9b06bac34c7a4a061d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=3736&autoStart=true) (Guest lecture by Peter Velickovic)
+* [Geometry and Structure-regularized in Deep Networks](https://canvas.uva.nl/courses/25602/files/folder/2021_files/lectures/Guest%20Lecture%20-%20Deep%20learning%20regularization?preview=5848649) (Guest lecture by Qiang Qiu)
+* [Meta-learning 1](https://webcolleges.uva.nl/Mediasite/Play/785f41edab5443428fec9ae87b7c45241d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=739&autoStart=true)
+* [Meta-learning 2](https://webcolleges.uva.nl/Mediasite/Play/c56c6ad5664b4ca0ae5f90619b6319911d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=2223&autoStart=true)
+
+
 Intructor: Katia Shutova
 
 **Orderered recordings**
