@@ -13,7 +13,9 @@ Labs for Deep Learning 1 course at UvA
 
 ### Lecture Content (Videos)
 
-Instructor: Xiantong 
+Instructor: Xiantong Zhen
+
+> Note: Access restricted to UvA
 
 **Fundamentals of deep learning**
 * [Introduction to DL](https://webcolleges.uva.nl/Mediasite/Play/7a54cba3e7714571bd9784deb71914fe1d?catalog=9e2bad479a7b48e38194f66f0cdaa85121&playFrom=2972&autoStart=true)
